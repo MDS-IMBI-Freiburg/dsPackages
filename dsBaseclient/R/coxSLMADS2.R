@@ -1,4 +1,3 @@
-
 #' @title Fit a cox proportional hazard Model (coxph) model with pooling via Study Level Meta-Analysis (SLMA)
 #' @description This is the second serverside aggregate function called by ds.coxSLMA.
 #' Fits a coxph model on data from single or multiple sources
@@ -283,4 +282,3 @@ coxSLMADS2 <-function(formula, weights, dataName){
 
 # AGGREGATE FUNCTION
 # coxSLMADS2
-

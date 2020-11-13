@@ -1,4 +1,3 @@
-
 #' @title Fit a cox proportional hazard Model (coxph) with pooling via Study Level Meta-Analysis (SLMA)
 #' @description This is the first serverside aggregate function called by ds.coxSLMA. Fits a coxph model on data from single or multiple sources
 #' with pooled co-analysis across studies being based on SLMA (Study Level Meta Analysis).
@@ -17,9 +16,6 @@
 #' For more detailed information see help for ds.coxSLMA.
 #' @author Sofack, Ghislain.(Based on glmSLMADS1 by Paul Burton for DataSHIELD Development Team)
 #' @export
-
-
-
 
 coxSLMADS1 <- function (formula, weights, data){
 
@@ -42,11 +38,8 @@ coxSLMADS1 <- function (formula, weights, data){
     dataTable <- eval(parse(text=data), envir = parent.frame())
   }
 
-
-
   formulatext <- Reduce(paste, deparse(formula))
   originalFormula <- formulatext
-
 
   # # Convert formula string into separate variable names split by |
 
@@ -55,7 +48,6 @@ coxSLMADS1 <- function (formula, weights, data){
   formulatext <- gsub("+", "|", formulatext, fixed=TRUE)
   formulatext <- gsub("*", "|", formulatext, fixed=TRUE)
   formulatext <- gsub("||", "|", formulatext, fixed=TRUE)
-
 
 
   formula2use <- stats::as.formula(paste0(Reduce(paste, deparse(originalFormula))), env = parent.frame()) # here we need the formula as a 'call' object
@@ -86,16 +78,12 @@ coxSLMADS1 <- function (formula, weights, data){
   varnames <- unique(varnames)
 
 
-
-
   X.mat <- as.matrix(mod.coxph.ds$x)
 
   dimX<-dim((X.mat))
 
 
   y.vect<-as.vector(mod.coxph.ds$y)
-
-
 
 
   ##############################################################
@@ -113,7 +101,6 @@ coxSLMADS1 <- function (formula, weights, data){
 
   }
 
-
   coef.names<-names(mod.coxph.ds$coefficients)
 
   if(is.null(weights)){
@@ -122,9 +109,6 @@ coxSLMADS1 <- function (formula, weights, data){
     ftext <- paste0("cbind(",weights,")")
     w.vect <- eval(parse(text=ftext), envir = parent.frame())
   }
-
-
-
 
 
   ################################
@@ -137,7 +121,6 @@ coxSLMADS1 <- function (formula, weights, data){
   #So as a safety measure, we will now use the same test that is used to
   #trigger a controlled trap in the clientside function to destroy the
   #score.vector and information.matrix in the study with the problem.
-
 
 
   #CHECK Y VECTOR VALIDITY
@@ -201,10 +184,6 @@ coxSLMADS1 <- function (formula, weights, data){
       }
     }
   }
-
-
-
-
 
   #If y, X, weights or offset data are invalid, or the model is overparameterized, this will be detected by coxSLMADS1
   #and passed to ds.coxSLMA resulting in a warning and a controlled shut down of the function.

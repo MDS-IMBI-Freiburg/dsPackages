@@ -1,5 +1,3 @@
-
-#'
 #' @title Server side function to calculates the survival object
 #' @description This function is similar to R function \code{Surv}.
 #' @details This function calculates the survival object
@@ -11,7 +9,6 @@
 #' @author Sofack, Ghislain. (based on corTestDS by Demetris Avraam, for DataSHIELD Development Team)
 #' @export
 #'
-
 
 SurvDS <- function (x,y) {
 

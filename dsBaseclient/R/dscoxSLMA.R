@@ -1,4 +1,3 @@
-#'
 #' @title Fit a cox proportional hazard Model (coxph) with pooling via Study Level Meta-Analysis (SLMA)
 #' @description Fits a cox proportional hazard Model (coxph) on data from single or multiple sources
 #' with pooled co-analysis across studies being based on SLMA (Study Level Meta Analysis).
@@ -40,14 +39,6 @@
 #' It is suggested to make \code{checks} argument TRUE only if an unexplained
 #'  problem in the model fit is encountered because the running process takes several minutes.
 #'
-#' In \code{maxit} Logistic regression and Poisson regression
-#' models can require many iterations, particularly if the starting value of the
-#' regression constant is far away from its actual value that the coxph
-#' is trying to estimate. In consequence we often set \code{maxit=30}
-#' but depending on the nature of the models you wish to fit, you may wish
-#' to be alerted much more quickly than this if there is a delay in convergence,
-#' or you may wish to allow more iterations.
-#'
 #' Server functions called: \code{coxSLMADS1}, and \code{coxSLMADS2}.
 #' @param formula an object of class formula describing
 #' the model to be fitted. For more information see
@@ -55,10 +46,8 @@
 #' @param weights a character string specifying the name of a variable containing
 #' prior regression weights for the fitting process. \code{ds.coxSLMA} does not allow a weights vector to be
 #' written directly into the coxph formula.
-#' @param combine.with.metafor logical. If TRUE the
-#' estimates and standard errors for each regression coefficient are pooled across
-#' studies using random-effects meta-analysis under maximum likelihood (ML),
-#' restricted maximum likelihood (REML) or fixed-effects meta-analysis (FE). Default TRUE.
+#' @param mixmeta If numstudies >1 the estimates for each regression coefficient and VarCovMatrix are pooled across
+#' studies using fixed-effects meta-analysis (FE).
 #' @param dataName a character string specifying the name of an (optional) data frame
 #' that contains all of the variables in the coxph formula.
 #' @param checks logical. If TRUE \code{ds.coxSLMA} checks the structural integrity
@@ -104,8 +93,6 @@
 #' @return \code{Ntotal}: the total number of observations in the given study
 #'                        (\code{Nvalid} + \code{Nmissing}).
 #' @return \code{data}: equivalent to input parameter \code{dataName} (above).
-#' @return \code{dispersion}: the estimated dispersion parameter: deviance.resid/df.resid for
-#' a gaussian family multiple regression model, 1.00 for logistic and poisson regression.
 #' @return \code{call}:  summary of key elements of the call to fit the model.
 #' @return \code{na.action}:  chosen method of dealing with missing values. This is
 #' usually, \code{na.action = na.omit} - see help in native R.
@@ -121,14 +108,11 @@
 #' @examples
 #' \dontrun{
 #'
-#'  ## Version 6, for version 5 see Wiki
-#'   # Connecting to the Opal servers
-#'
 #'   require('DSI')
 #'   require('DSOpal')
 #'   require('dsBaseClient')
 #'
-#'   # Example 1: Fitting GLM for survival analysis
+#'   # Example 1: Fitting coxph for survival analysis
 #'   # For this analysis we need to load survival data from the server
 #'
 #'   builder <- DSI::newDSLoginBuilder()
@@ -181,12 +165,10 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
     datasources <- datashield.connections_find()
   }
 
-
   # verify that 'formula' was set
   if(is.null(formula)){
     stop(" Please provide a valid regression formula!", call.=FALSE)
   }
-
 
   # check if user gave weights directly in formula, if so the argument 'weights'
   # to provide name of offset or weights variable
@@ -205,7 +187,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   if(!(is.null(dataName))){
     defined <- dsBaseClient:::isDefined(datasources, dataName)
   }
-
 
   #MOVE ITERATION COUNT BEFORE ASSIGNMENT OF beta.vect.next
   #Iterations need to be counted. Start off with the count at 0
@@ -233,7 +214,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   at.least.one.study.valid<-0
 
 
-
   num.par.coxph<-NULL
 
   coef.names<-NULL
@@ -249,14 +229,11 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
     }
   }
 
-
   y.invalid<-NULL
   Xpar.invalid<-NULL
   w.invalid<-NULL
   coxph.saturation.invalid<-NULL
   errorMessage<-NULL
-
-
 
   for(ss in 1:numstudies)
   {
@@ -266,8 +243,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
     coxph.saturation.invalid <-c(coxph.saturation.invalid,study.summary.0[[ss]][[6]])
     errorMessage<-c(errorMessage,study.summary.0[[ss]][[7]])
   }
-
-
 
 
   y.invalid<-as.matrix(y.invalid)
@@ -291,7 +266,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   dimnames(errorMessage)<-list(names(datasources),"ERROR MESSAGES")
 
 
-
   output.blocked.information.1<-"EVERY STUDY HAS DATA THAT COULD BE POTENTIALLY DISCLOSIVE UNDER THE CURRENT MODEL:"
   output.blocked.information.2<-"Any values of 1 in the following tables denote potential disclosure risks."
   output.blocked.information.3<-"Please use the argument <datasources> to include only valid studies."
@@ -304,7 +278,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
     message("\n\nEVERY STUDY HAS DATA THAT COULD BE POTENTIALLY DISCLOSIVE UNDER THE CURRENT MODEL:\n",
             "Any values of 1 in the following tables denote potential disclosure risks.\n",
             "Errors by study are as follows:\n")
-
 
     return(list(
       output.blocked.information.1,
@@ -333,7 +306,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   }
 
 
-
   beta.vect.next <- rep(0,num.par.coxph)
   beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
 
@@ -350,8 +322,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   epsilon<-1.0e-08
 
   f<-NULL
-
-
 
 
   #NOW CALL SECOND COMPONENT OF coxSLMADS TO GENERATE SCORE VECTORS AND INFORMATION MATRICES
@@ -428,10 +398,10 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   output.summary<-eval(parse(text=output.summary.text))
 
 
-#END OF ANNOTATION CODE ########################
+##########END OF ANNOTATION CODE ########################
 
 
-## Multivariate Metaanalyse ########################
+## MULTIVARIATE METAANALYSE ########################
 
   for(i in 1:numstudies){
     if(numstudies > 1){

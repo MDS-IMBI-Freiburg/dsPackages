@@ -1,24 +1,27 @@
-
-#'
-#' @title Tests for correlation between paired samples
-#' @description This function is similar to R function \code{cor.test}.
-#' @details The function runs a two-sided Pearson test with a 0.95 confidence level.
-#' @param x a character string providing  the name of a numerical vector.
-#' @param y a character string providing  the name of a numerical vector.
-#' @return the results of the survival object.
+#' @title Client side function calling SurvDS
+#' @description This function is similar to R function \code{Surv}.
+#' @details This function calculates the survival object
+#' usually used as a response variable in a model formula..
+#' @param x a numeric vector indicating the follow up time.
+#' @param y a numeric vector providing the name of the status indicator(event).Usually binary
+#' e.g 0=alive, 1=dead.For multiple enpoint data the event variable will be a factor, whose
+#' first level is treated as censoring. Although unusual, the event indicator can be omitted,
+#' in which case all subjects are assumed to have an event.
+#' @param newobj a character string specifying the name of the object to which the survival object
+#' on the serverside in each study is to be written.
+#' If no <newobj> argument is specified, the output
+#' object defaults to "Survobj".
+#' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login.
+#' If the \code{datasources} argument is not specified
+#' the default set of connections will be used: see \code{\link{datashield.connections_default}}.
+#' @return the results of the survival object stored on the server.
 #' @author Sofack, Ghislain. (based on corTestDS by Demetris Avraam, for DataSHIELD Development Team)
 #' @export
 #'
 
-
-
-
-
-
 ds.Surv <- function(x=NULL, y= NULL, newobj= NULL, datasources=NULL){
 
   # if no opal login details are provided look for 'opal' objects in the environment
-
 
   if(is.null(datasources)){
     datasources <- datashield.connections_find()
@@ -30,9 +33,6 @@ ds.Surv <- function(x=NULL, y= NULL, newobj= NULL, datasources=NULL){
   if(is.null(y)){
     stop("y=NULL. Please provide the names of the 2nd numeric vector!", call.=FALSE)
   }
-
-
-
 
   # the input variable might be given as column table (i.e. D$object)
   # or just as a vector not attached to a table (i.e. object)
@@ -52,29 +52,20 @@ ds.Surv <- function(x=NULL, y= NULL, newobj= NULL, datasources=NULL){
     }
   }
 
-
-
   # call the internal function that checks the input object(s) is(are) of the same class in all studies.
   for(i in 1:length(objects)){
     typ <- dsBaseClient:::checkClass(datasources, objects[i])
   }
-
-
 
   # create a name by default if user did not provide a name for the new variable
   if(is.null(newobj)){
     newobj <- "Survobj"
   }
 
-
-
-
   # call the server side function
   calltext <- call("SurvDS", x, y)
 
   DSI::datashield.assign(datasources, newobj, calltext)
-
-
 
   #############################################################################################################
   #DataSHIELD CLIENTSIDE MODULE: CHECK KEY DATA OBJECTS SUCCESSFULLY CREATED                                  #
@@ -150,8 +141,5 @@ ds.Surv <- function(x=NULL, y= NULL, newobj= NULL, datasources=NULL){
   }
 
 
-  #END OF CHECK OBJECT CREATED CORECTLY MODULE
-  #############################################################################################################
-
+  ###END OF CHECK OBJECT CREATED CORECTLY MODULE
 }
-

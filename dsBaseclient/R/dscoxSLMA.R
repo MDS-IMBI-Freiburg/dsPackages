@@ -42,7 +42,7 @@
 #'
 #' In \code{maxit} Logistic regression and Poisson regression
 #' models can require many iterations, particularly if the starting value of the
-#' regression constant is far away from its actual value that the GLM
+#' regression constant is far away from its actual value that the coxph
 #' is trying to estimate. In consequence we often set \code{maxit=30}
 #' but depending on the nature of the models you wish to fit, you may wish
 #' to be alerted much more quickly than this if there is a delay in convergence,
@@ -54,7 +54,7 @@
 #' \strong{Details}.
 #' @param weights a character string specifying the name of a variable containing
 #' prior regression weights for the fitting process. \code{ds.coxSLMA} does not allow a weights vector to be
-#' written directly into the GLM formula.
+#' written directly into the coxph formula.
 #' @param combine.with.metafor logical. If TRUE the
 #' estimates and standard errors for each regression coefficient are pooled across
 #' studies using random-effects meta-analysis under maximum likelihood (ML),
@@ -149,20 +149,13 @@
 #'   # Log onto the remote Opal training servers
 #'   connections <- DSI::datashield.login(logins = logindata, assign = TRUE, symbol = "D")
 #'
+#'
 #'   # Create the serverside survival object
 #'
 #'   ds.Surv (x = "D$survtime",
 #'            y = "D$cens",
 #'            newobj = "Survobj"
 #'            datasources = connections)
-#'
-#'
-#'   # make sure that the outcome is numeric
-#'   ds.asNumeric(x.name = "D$cens",
-#'                newobj = "EVENT",
-#'                datasources = connections)
-#'
-#'
 #'
 #'
 #'   ds.coxSLMA(formula = Survobj ~ female * age.60,
@@ -180,12 +173,6 @@
 #' @export
 
 
-
-
-
-
-
-
 ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,dataName=NULL,
                      checks=FALSE, maxit=30, datasources=NULL) {
 
@@ -201,14 +188,14 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   }
 
 
-  # check if user gave offset or weights directly in formula, if so the argument 'offset' or 'weights'
+  # check if user gave weights directly in formula, if so the argument 'weights'
   # to provide name of offset or weights variable
   if(sum(as.numeric(grepl('weights', formula, ignore.case=TRUE)))>0)
   {
-    cat("\n\n WARNING: you may have specified an offset or regression weights")
-    cat("\n as part of the model formula. In ds.glm (unlike the usual glm in R)")
-    cat("\n you must specify an offset or weights separately from the formula")
-    cat("\n using the offset or weights argument.\n\n")
+    cat("\n\n WARNING: you may have specified a regression weights")
+    cat("\n as part of the model formula. In ds.coxSLMA (unlike the usual coxph in R)")
+    cat("\n you must specify  weights separately from the formula")
+    cat("\n using the weights argument.\n\n")
   }
 
   formula <- stats::as.formula(formula)
@@ -235,7 +222,7 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
 
 
-  #IDENTIFY THE CORRECT DIMENSION FOR START BETAs VIA CALLING FIRST COMPONENT OF glmDS
+  #IDENTIFY THE CORRECT DIMENSION FOR START BETAs VIA CALLING FIRST COMPONENT OF CoxSLMADS
 
   cally1 <- call('coxSLMADS1', formula, weights, dataName)
 
@@ -317,11 +304,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
     message("\n\nEVERY STUDY HAS DATA THAT COULD BE POTENTIALLY DISCLOSIVE UNDER THE CURRENT MODEL:\n",
             "Any values of 1 in the following tables denote potential disclosure risks.\n",
             "Errors by study are as follows:\n")
-    #		print(as.matrix(y.invalid))
-    #		print(as.matrix(Xpar.invalid))
-    #		print(as.matrix(w.invalid))
-    #		print(as.matrix(coxph.saturation.invalid))
-    #		print(as.matrix(errorMessage))
 
 
     return(list(
@@ -336,6 +318,7 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
     ))
   }
 
+
   #CASE 2 - AT LEAST ONE STUDY VALID AND AT LEAST ONE INVALID
   if(at.least.one.study.data.error)
   {
@@ -346,11 +329,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
             "You may also choose to exclude invalid studies from\n",
             "the whole analysis using the <datasources> argument.\n",
             "Errors by study are as follows:\n")
-    #		print(as.matrix(y.invalid))
-    #		print(as.matrix(Xpar.invalid))
-    #		print(as.matrix(w.invalid))
-    #		print(as.matrix(coxph.saturation.invalid))
-    #		print(as.matrix(errorMessage))
 
   }
 
@@ -374,13 +352,13 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   f<-NULL
 
 
-  #NOW CALL SECOND COMPONENT OF glmDS TO GENERATE SCORE VECTORS AND INFORMATION MATRICES
+
+
+  #NOW CALL SECOND COMPONENT OF coxSLMADS TO GENERATE SCORE VECTORS AND INFORMATION MATRICES
 
   cally2 <- call('coxSLMADS2', formula, weights, dataName)
 
   study.summary <- DSI::datashield.aggregate(datasources, cally2)
-
-
 
 
   numstudies<-length(datasources)
@@ -391,27 +369,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   no.studies.valid<-1
 
 
-
-  for(j in 1:numstudies)
-  {
-    ss1<-unlist(study.summary[[j]][[1]])
-    if(is.numeric(ss1))
-    {
-      inv.diag.se<-1/sqrt(diag(study.summary[[j]]$cov.scaled))
-
-      cor.matrix<-t(diag(inv.diag.se))%*%study.summary[[j]]$cov.scaled%*%(diag(inv.diag.se))
-      study.summary[[j]]$VarCovMatrix<-study.summary[[j]]$cov.scaled
-      study.summary[[j]]$CorrMatrix<-cor.matrix
-      study.include.in.analysis<-c(study.include.in.analysis,j)
-      no.studies.valid<-0
-    }else{
-      study.with.errors<-c(study.with.errors,j)
-      all.studies.valid<-0
-    }
-  }
-
-
-
   #MAKE SURE THAT IF SOME STUDIES HAVE MORE PARAMETERS IN THE
   #FITTED coxph (eg BECAUSE OF ALIASING) THE FINAL RETURN MATRICES
   #HAVE ENOUGH ROWS TO FIT THE MAXIMUM LENGTH
@@ -420,208 +377,74 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   numcoefficients.max<-0
 
 
-
-  #
-  # for(g in 1:numstudies){
-  #
-  #   coefs = rbind(study.summary[[1]]$coefficients[,1], study.summary[[2]]$coefficients[,1], study.summary[[3]]$coefficients[,1])
-  #
-  #   covars = list( study.summary[[1]]$VarCovMatrix,study.summary[[2]]$VarCovMatrix, study.summary[[3]]$VarCovMatrix )
-  #
-  #   if(numstudies > 1){
-  #
-  #   mix <- mixmeta::mixmeta(coefs, S = covars, method = "fixed")
-  #
-  #   return(list(study.summary = study.summary, coefs= coefs, covars = covars, mix = summary(mix)))
-  #
-  #   }
-  #   else {
-  #     return(list(study.summary = study.summary, coefs = coefs, covars = covars))
-  #   }
-  #
-  # }
-  #
-
-
-
-  for(g in range(1:numstudies)){
-
-    coefs = study.summary[[g]]$coefficients[,1]
-
-    covars = list( study.summary[[g]]$VarCovMatrix )
-
-    return(list(datasources = datasources, study.summary = study.summary, coefs= coefs, covars = covars))
-
+  for(g in numstudies){
+    if(length(study.summary[[g]]$coefficients[,1])>numcoefficients.max){
+      numcoefficients.max<-length(study.summary[[g]]$coefficients[,1])
+    }
   }
-
-
-
-
-
-
-  # for(g in study.include.in.analysis){
-  #   if(length(study.summary[[g]]$coefficients[,1])>numcoefficients.max){
-  #     numcoefficients.max<-length(study.summary[[g]]$coefficients[,1])
-  #   }
-  # }
-  #
 
   numcoefficients<-numcoefficients.max
 
-  betamatrix<-matrix(NA,nrow<-numcoefficients,ncol=numstudies)
+  coefmatrix<-matrix(NA,nrow<-numcoefficients,ncol=numstudies)
 
-  # sematrix<-matrix(NA,nrow<-numcoefficients,ncol=numstudies)
+  covarmatrix<- NULL
 
 
-  for(k in study.include.in.analysis){
-    betamatrix[,k]<-study.summary[[k]]$coefficients[,1]
-
-    # sematrix[,k]<-study.summary[[k]]$coefficients[,2]
+  for(k in 1:numstudies){
+    coefmatrix[,k]<-study.summary[[k]]$coefficients[,1]
+    covarmatrix[k]<-list(study.summary[[k]]$VarCovMatrix)
   }
+  coefmatrix = t(coefmatrix)
 
-  return( coefs)
 
   ################################################
   #ANNOTATE OUTPUT MATRICES WITH STUDY INDICATORS#
   ################################################
 
-  # study.names.list<-NULL
-  # betas.study.names.list<-NULL
-  # ses.study.names.list<-NULL
-  #
-  #
-  #
-  # for(v in 1:numstudies){
-  #
-  #   study.names.list<-c(study.names.list,paste0("study",as.character(v)))
-  #   betas.study.names.list<-c(betas.study.names.list,paste0("betas study ",as.character(v)))
-  #   ses.study.names.list<-c(ses.study.names.list,paste0("ses study ",as.character(v)))
-  # }
-  #
-  # # dimnames(betamatrix)<-list(dimnames(study.summary[[1]]$coefficients)[[1]], betas.study.names.list)
-  # # dimnames(sematrix)<-list(dimnames(study.summary[[1]]$coefficients)[[1]], ses.study.names.list)
-  # #
-  # output.summary.text<-paste0("list(")
-  #
-  # for(u in 1:numstudies){
-  #   output.summary.text<-paste0(output.summary.text,"study",as.character(u),"=study.summary[[",as.character(u),"]],"," ")
-  # }
-  #
-  # output.summary.text.save<-output.summary.text
-  # output.summary.text<-paste0(output.summary.text,"input.beta.matrix.for.SLMA=as.matrix(betamatrix),input.se.matrix.for.SLMA=as.matrix(sematrix))")
-  #
-  #
-  # output.summary<-eval(parse(text=output.summary.text))
-  #
-  #
-  # #######################END OF ANNOTATION CODE
-  #
-  # SLMA.pooled.ests.matrix<-matrix(NA,nrow<-numcoefficients,ncol=6)
-  #
-  #
-  #
-  #
-  # if(!combine.with.metafor)
-  # {
-  #   return(output.summary)
-  # }
-  #
-  # if(no.studies.valid)
-  # {
-  #   return(output.summary)
-  # }
-  #
-  # #NOW ONLY WORKING WITH SITUATIONS WITH AT LEAST ONE VALID STUDY
-  #
-  # #IF combine.with.metafor == TRUE, FIRST CHECK THAT THE MODELS IN EACH STUDY MATCH
-  # #IF THERE ARE DIFFERENT NUMBERS OF PARAMETERS THE ANALYST WILL
-  # #HAVE TO USE THE RETURNED MATRICES FOR betas AND ses TO DETERMINE WHETHER
-  # #COMBINATION ACROSS STUDIES IS POSSIBLE AND IF SO, WHICH PARAMETERS GO WITH WHICH
-  # #ALSO DETERMINE WHICH STUDIES HAVE VALID DATA
-  #
-  # beta.matrix.for.SLMA<-as.matrix(betamatrix)
-  # se.matrix.for.SLMA<-as.matrix(sematrix)
-  #
-  # #SELECT VALID COLUMNS ONLY (THERE WILL ALWAYS BE AT LEAST ONE)
-  #
-  # usecols<-NULL
-  #
-  # for(ut in 1:(dim(beta.matrix.for.SLMA)[2]))
-  # {
-  #   if(!is.na(beta.matrix.for.SLMA[1,ut])&&!is.null(beta.matrix.for.SLMA[1,ut]))
-  #   {
-  #     usecols<-c(usecols,ut)
-  #   }
-  # }
-  #
-  #
-  # betamatrix.all<-beta.matrix.for.SLMA
-  # sematrix.all<-se.matrix.for.SLMA
-  #
-  # betamatrix.valid<-beta.matrix.for.SLMA[,usecols]
-  # sematrix.valid<-se.matrix.for.SLMA[,usecols]
-  #
-  # #CHECK FOR MATCHED PARAMETERS
-  #
-  # num.valid.studies<-as.numeric(dim(as.matrix(betamatrix.valid))[2])
-  # coefficient.vectors.match<-TRUE
-  #
-  #
-  #
-  # if(num.valid.studies>1){
-  #   for(j in 1:(num.valid.studies-1))
-  #   {
-  #     if(length(betamatrix.valid[,j])!=length(betamatrix.valid[,(j+1)]))coefficient.vectors.match<-FALSE
-  #   }
-  # }else{
-  #   coefficient.vectors.match<-TRUE
-  # }
-  #
-  #
-  #
-  #
-  # if(!coefficient.vectors.match){
-  #   cat("\n\nModels in different sources vary in structure\nplease match coefficients for meta-analysis individually\n")
-  #   cat("nYou can use the DataSHIELD generated estimates and standard errors as the basis for a meta-analysis\nbut carry out the final pooling step independently of DataSHIELD using whatever meta-analysis package you wish\n\n")
-  #   return(list(output.summary=output.summary))
-  # }
-  #
-  #
-  #
-  # #IF combine.with.metafor == TRUE AND MODEL STRUCTURES MATCH ACROSS ALL STUDIES
-  # #CREATE STUDY LEVEL META-ANALYSIS (SLMA) ESTIMATES FOR ALL PARAMETERS
-  # #USING metafor() AND THREE APPROACHES TO SLMA: SLMA UNDER MAXIMUM LIKELIHOOD (SMLA-ML)
-  # #SLMA UNDER RESTRICTED MAXIMUM LIKELIHOOD (SMLA-REML) AND USING FIXED EFFECTS (SLMA-FE)
-  #
-  # dimnames(SLMA.pooled.ests.matrix)<-list(dimnames(betamatrix.valid)[[1]],
-  #                                         c("pooled.ML","se.ML","pooled.REML","se.REML","pooled.FE","se.FE"))
-  #
-  #
-  #
-  #
-  #
-  # for(p in 1:numcoefficients){
-  #   rma.ML<-metafor::rma(yi=as.matrix(betamatrix.valid)[p,], sei=as.matrix(sematrix.valid)[p,], method="ML")
-  #   rma.REML<-metafor::rma(yi=as.matrix(betamatrix.valid)[p,], sei=as.matrix(sematrix.valid)[p,], method="REML")
-  #   rma.FE<-metafor::rma(yi=as.matrix(betamatrix.valid)[p,], sei=as.matrix(sematrix.valid)[p,], method="FE")
-  #
-  #   SLMA.pooled.ests.matrix[p,1]<-rma.ML$beta
-  #   SLMA.pooled.ests.matrix[p,2]<-rma.ML$se
-  #
-  #   SLMA.pooled.ests.matrix[p,3]<-rma.REML$beta
-  #   SLMA.pooled.ests.matrix[p,4]<-rma.REML$se
-  #
-  #   SLMA.pooled.ests.matrix[p,5]<-rma.FE$beta
-  #   SLMA.pooled.ests.matrix[p,6]<-rma.FE$se
-  #
-  # }
-  #
-  #
-  #
-  # return(list(output.summary=output.summary, num.valid.studies=num.valid.studies,betamatrix.all=betamatrix.all,sematrix.all=sematrix.all, betamatrix.valid=betamatrix.valid,sematrix.valid=sematrix.valid,
-  #             SLMA.pooled.ests.matrix=SLMA.pooled.ests.matrix))
+  study.names.list<-NULL
+  coef.study.names.list<-NULL
+  covar.study.names.list<-NULL
 
+  for(v in 1:numstudies){
+
+    study.names.list<-c(study.names.list,paste0("study",as.character(v)))
+    coef.study.names.list<-c(coef.study.names.list,paste0("coef study ",as.character(v)))
+    covar.study.names.list<-c(covar.study.names.list,paste0("covar study ",as.character(v)))
+  }
+
+  colnames(coefmatrix) = dimnames(study.summary[[1]]$coefficients)[[1]]
+  rownames(coefmatrix) =  coef.study.names.list
+
+  output.summary.text<-paste0("list(")
+
+  for(u in 1:numstudies){
+    output.summary.text<-paste0(output.summary.text,"study",as.character(u),"=study.summary[[",as.character(u),"]],"," ")
+  }
+
+  output.summary.text.save<-output.summary.text
+  output.summary.text<-paste0(output.summary.text,"input.coef.matrix.for.SLMA=as.matrix(coefmatrix),input.covar.matrix.for.SLMA=as.list(covarmatrix))")
+
+
+  output.summary<-eval(parse(text=output.summary.text))
+
+
+#END OF ANNOTATION CODE ########################
+
+
+## Multivariate Metaanalyse ########################
+
+  for(i in 1:numstudies){
+    if(numstudies > 1){
+
+      mix <- mixmeta::mixmeta(formula = coefmatrix, S = covarmatrix, method = "fixed")
+
+      return(list(output.summary=output.summary,coefmatrix, covarmatrix, summary(mix)))
+    }
+    else{
+      return(list(study.summary= study.summary))
+    }
+
+  }
 }
-
 
 # ds.coxSLMA

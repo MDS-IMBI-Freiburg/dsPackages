@@ -130,34 +130,40 @@
 #'                  table = "SURVIVAL.EXPAND_NO_MISSING3", driver = "OpalDriver")
 #'   logindata <- builder$build()
 #'
-#'   # Log onto the remote Opal training servers
+#'  # Log onto the remote Opal training servers
 #'   connections <- DSI::datashield.login(logins = logindata, assign = TRUE, symbol = "D")
 #'
 #'
-#'   # Create the serverside survival object
+#'  # To prevent multistate models, the 'cens' variable must be an interger/ numeric
 #'
-#'   ds.Surv (x = "D$survtime",
-#'            y = "D$cens",
-#'            newobj = "Survobj"
+#' ds.asInteger(x.name = "D$cens",
+#'              newobj = "CENS",
+#'              datasources = connections)
+#'
+#' # Create the serverside survival object
+#
+#' ds.Surv(x = "D$survtime",
+#'         y = "D$cens",
+#'         newobj = "Survobj"
+#'         datasources = connections)
+#'
+#'
+#' ds.coxSLMA(formula = Survobj ~ noise.56 + pm10.16 + bmi.26 + age.60 ,
+#'            data = "D",
+#'            weights = NULL,
+#'            checks = FALSE,
+#'            maxit = 20,
 #'            datasources = connections)
 #'
+#'  # Clear the Datashield R sessions and logout
 #'
-#'   ds.coxSLMA(formula = Survobj ~ female * age.60,
-#'          data = "D",
-#'          weights = NULL,
-#'          checks = FALSE,
-#'          maxit = 20,
-#'          datasources = connections)
-#'
-#'   # Clear the Datashield R sessions and logout
-#'   datashield.logout(connections)
+#' datashield.logout(connections)
 #'
 #' }
-#'
 #' @export
 
 
-ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,dataName=NULL,
+ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL,
                      checks=FALSE, maxit=30, datasources=NULL) {
 
   # look for DS connections
@@ -305,7 +311,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
 
   }
 
-
   beta.vect.next <- rep(0,num.par.coxph)
   beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
 
@@ -322,7 +327,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
   epsilon<-1.0e-08
 
   f<-NULL
-
 
   #NOW CALL SECOND COMPONENT OF coxSLMADS TO GENERATE SCORE VECTORS AND INFORMATION MATRICES
 
@@ -362,9 +366,9 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,  combine.with.metafor=TRUE,data
 
   for(k in 1:numstudies){
     coefmatrix[,k]<-study.summary[[k]]$coefficients[,1]
+    coefmatrix = t(coefmatrix)
     covarmatrix[k]<-list(study.summary[[k]]$VarCovMatrix)
   }
-  coefmatrix = t(coefmatrix)
 
 
   ################################################

@@ -43,7 +43,7 @@ coxSLMADS2 <-function(formula, weights, dataName){
     dataDF<-NULL
   }
 
-  # Rewrite formula extracting variables nested in strutures like data frame or list
+  # Rewrite formula extracting variables nested in structures like data frame or list
   # (e.g. D$A~D$B will be re-written A~B)
   # Note final product is a list of the variables in the model (yvector and covariates)
   # it is NOT a list of model terms - these are derived later
@@ -51,7 +51,7 @@ coxSLMADS2 <-function(formula, weights, dataName){
   # Convert formula into an editable character string
   formulatext <- Reduce(paste, deparse(formula))
 
-  # First save original model formala
+  # First save original model formula
 
   originalFormula <- formulatext
 
@@ -238,9 +238,8 @@ coxSLMADS2 <-function(formula, weights, dataName){
     outlist<-list(rank=mg$rank, aic=mg$aic,
                   iter=mg$iter, converged=mg$converged,
                   boundary=mg$boundary, na.action=options("na.action"), call=summary(mg)$call, terms=summary(mg)$terms,
-                  aliased=summary(mg)$aliased, dispersion=summary(mg)$dispersion,
+                  aliased=summary(mg)$aliased,
                   data=dataName, df=summary(mg)$df, Ntotal=Ntotal, Nvalid=Nvalid, Nmissing=Nmissing,
-                  cov.unscaled=summary(mg)$cov.unscaled, cov.scaled=summary(mg)$cov.scaled,
                   weights=varname.weights,VarCovMatrix= stats::vcov(mg),CorrMatrix=NA,
                   deviance.null=mg$null.deviance, df.null=mg$df.null, deviance.resid=mg$deviance, df.resid=mg$df.residual,
                   formula=mg$formula, coefficients=summary(mg)$coefficients)

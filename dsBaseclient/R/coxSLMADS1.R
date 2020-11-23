@@ -61,7 +61,6 @@ coxSLMADS1 <- function (formula, weights, data){
 
   model.variables <- unlist(strsplit(formulatext, split="|", fixed=TRUE))
 
-
   varnames <- c()
   for(i in 1:length(model.variables)){
     elt <- unlist(strsplit(model.variables[i], split="$", fixed=TRUE))
@@ -76,7 +75,6 @@ coxSLMADS1 <- function (formula, weights, data){
   }
 
   varnames <- unique(varnames)
-
 
   X.mat <- as.matrix(mod.coxph.ds$x)
 

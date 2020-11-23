@@ -73,20 +73,19 @@
 #'    \itemize{
 #'    \item{First}{: the names of all of the regression parameters (coefficients) in the model}
 #'    \item{second}{: the estimated values}
-#'    \item{third}{: corresponding standard errors of the estimated values}
-#'    \item{fourth}{: the ratio of estimate/standard error}
-#'    \item{fifth}{: the p-value treating that as a standardised normal deviate}
+#'    \item{third}{: the exponentials of the estimated values}
+#'    \item{fourth}{: corresponding standard errors of the estimated values}
+#'    \item{fifth}{: the ratio of estimate/standard error}
+#'    \item{sixth}{: the p-value treating that as a standardised normal deviate}
 #' }
 #' @return \code{formula}: model formula, see description of formula as an input parameter (above).
 #' @return \code{df.resid}: the residual degrees of freedom around the model.
 #' @return \code{deviance.resid}: the residual deviance around the model.
 #' @return \code{df.null}: the degrees of freedom around the null model (with just an intercept).
 #' @return \code{dev.null}: the deviance around the null model (with just an intercept).
-#' @return \code{CorrMatrix}: the correlation matrix of parameter estimates.
+#' @return \code{CoefMatrix}: the matrix of parameter estimates.
 #' @return \code{VarCovMatrix}: the variance-covariance matrix of parameter estimates.
 #' @return \code{weights}: the name of the vector (if any) holding regression weights.
-#' @return \code{cov.scaled}: equivalent to \code{VarCovMatrix}.
-#' @return \code{cov.unscaled}: equivalent to VarCovMatrix but assuming dispersion (scale)
 #' parameter is 1.
 #' @return \code{Nmissing}: the number of missing observations in the given study.
 #' @return \code{Nvalid}: the number of valid (non-missing) observations in the given study.
@@ -163,8 +162,7 @@
 #' @export
 
 
-ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL,
-                     checks=FALSE, maxit=30, datasources=NULL) {
+ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, maxit=30, datasources=NULL) {
 
   # look for DS connections
   if(is.null(datasources)){
@@ -181,13 +179,12 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL,
   if(sum(as.numeric(grepl('weights', formula, ignore.case=TRUE)))>0)
   {
     cat("\n\n WARNING: you may have specified a regression weights")
-    cat("\n as part of the model formula. In ds.coxSLMA (unlike the usual coxph in R)")
+    cat("\n as part of the model formula.")
     cat("\n you must specify  weights separately from the formula")
     cat("\n using the weights argument.\n\n")
   }
 
   formula <- stats::as.formula(formula)
-
 
   # if the argument 'dataName' is set, check that the data frame is defined (i.e. exists) on the server site
   if(!(is.null(dataName))){
@@ -202,7 +199,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL,
 
   # number of 'valid' studies (those that passed the checks) and vector of beta values
   numstudies <- length(datasources)
-
 
   #ARBITRARY LENGTH FOR START BETAs AT THIS STAGE BUT IN LEGAL TRANSMISSION FORMAT ("0,0,0,0,0")
   beta.vect.next <- rep(0,5)
@@ -334,7 +330,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL,
 
   study.summary <- DSI::datashield.aggregate(datasources, cally2)
 
-
   numstudies<-length(datasources)
 
   study.include.in.analysis <- NULL
@@ -347,9 +342,7 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL,
   #FITTED coxph (eg BECAUSE OF ALIASING) THE FINAL RETURN MATRICES
   #HAVE ENOUGH ROWS TO FIT THE MAXIMUM LENGTH
 
-
   numcoefficients.max<-0
-
 
   for(g in numstudies){
     if(length(study.summary[[g]]$coefficients[,1])>numcoefficients.max){

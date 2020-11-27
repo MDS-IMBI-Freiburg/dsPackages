@@ -14,9 +14,8 @@
 #' optimisation methods: random effects under maximum likelihood (ML); random effects
 #' under restricted maximum likelihood (REML); or fixed effects (FE). But once
 #' the estimates and standard errors are on the clientside, the user
-#' can alternatively choose to use the metafor package in any way he/she wishes,
-#' to pool the coefficients across studies or, indeed, to use another
-#' meta-analysis package, or their own code.
+#' can alternatively choose to use another meta-analysis package in any way he/she wishes,
+#' to pool the coefficients across studies.
 #' In \code{formula} Most shortcut notation for formulas allowed under R's standard \code{coxph()}
 #' function is also allowed by \code{ds.coxSLMA}.
 #'
@@ -364,9 +363,8 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
   }
 
 
-  ################################################
-  #ANNOTATE OUTPUT MATRICES WITH STUDY INDICATORS#
-  ################################################
+  #ANNOTATE OUTPUT MATRICES WITH STUDY INDICATORS
+
 
   study.names.list<-NULL
   coef.study.names.list<-NULL
@@ -395,10 +393,10 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
   output.summary<-eval(parse(text=output.summary.text))
 
 
-##########END OF ANNOTATION CODE ########################
+#END OF ANNOTATION CODE
 
 
-## MULTIVARIATE METAANALYSE ########################
+## MULTIVARIATE METAANALYSE
 
   for(i in 1:numstudies){
     if(numstudies > 1){
@@ -410,7 +408,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
     else{
       return(list(study.summary= study.summary))
     }
-
   }
 }
 

@@ -22,14 +22,14 @@
 
 coxSLMADS2 <-function(formula, weights, dataName){
 
-  #############################################################
-  #MODULE 1: CAPTURE THE nfilter SETTINGS                     #
-  thr <- dsBase::listDisclosureSettingsDS()                           #
-  nfilter.tab <- as.numeric(thr$nfilter.tab)                  #
-  nfilter.glm <- as.numeric(thr$nfilter.glm)                  #
-  #nfilter.subset<-as.numeric(thr$nfilter.subset)             #
-  #nfilter.string<-as.numeric(thr$nfilter.string)             #
-  #############################################################
+
+  #MODULE 1: CAPTURE THE nfilter SETTINGS
+  thr <- dsBase::listDisclosureSettingsDS()
+  nfilter.tab <- as.numeric(thr$nfilter.tab)
+  nfilter.glm <- as.numeric(thr$nfilter.glm)
+  #nfilter.subset<-as.numeric(thr$nfilter.subset)
+  #nfilter.string<-as.numeric(thr$nfilter.string)
+
 
   errorMessage2<-"No errors"
 
@@ -90,7 +90,7 @@ coxSLMADS2 <-function(formula, weights, dataName){
 
 
   # 	#Identify and use variable names to count missings
-  #
+
   all.data <- eval(parse(text=cbindraw.text), envir = parent.frame())
   all.data <- eval(parse(text=cbindraw.text))
 
@@ -138,9 +138,7 @@ coxSLMADS2 <-function(formula, weights, dataName){
   pw.vect<-mg$prior.weights
 
 
-  ##############################
-  #TEST FOR OVERSATURATED MODEL#
-  ##############################
+  #Test for oversaturated Model
 
   dimX<-dim((X.mat))
 
@@ -149,7 +147,7 @@ coxSLMADS2 <-function(formula, weights, dataName){
   num.N<-as.numeric(dimX[1])
 
   if(num.p>(nfilter.glm*num.N)){
-    coxph.saturation.invalid<-1
+    coxph.saturation.invalid <-1
     errorMessage.gos<-paste0("ERROR: Model is oversaturated (too many model parameters relative to sample size)",
                              "leading to a possible risk of disclosure - please simplify model. With ",
                              num.p," parameters and nfilter.glm = ",round(nfilter.glm,4)," you need ",
@@ -157,9 +155,8 @@ coxSLMADS2 <-function(formula, weights, dataName){
   }
 
 
-  #########################
-  #CHECK Y VECTOR VALIDITY#
-  #########################
+
+  #Check for Y vector validity
 
   y.invalid <- 0
 
@@ -217,9 +214,8 @@ coxSLMADS2 <-function(formula, weights, dataName){
     }
   }
 
-  ###############################################
-  #FIT MODEL AFTER CONFIRMING NO DISCLOSURE RISK#
-  ###############################################
+
+  #Fit the model after confirming no disclosure risk
 
   disclosure.risk<-0
 
@@ -269,7 +265,6 @@ coxSLMADS2 <-function(formula, weights, dataName){
     if(w.invalid==1){
       outlist.w<-list(errorMessage.w=errorMessage.w)
     }
-
 
     outlist<-list(outlist.1,outlist.2,outlist.gos,outlist.y,outlist.x,outlist.w)
   }

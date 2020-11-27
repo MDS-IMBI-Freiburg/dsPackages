@@ -231,13 +231,11 @@ coxSLMADS2 <-function(formula, weights, dataName){
     Nmissing <- length(mg$na.action)
     Ntotal <- Nvalid+Nmissing
 
-    outlist<-list(rank=mg$rank, aic=mg$aic,
-                  iter=mg$iter, converged=mg$converged,
-                  boundary=mg$boundary, na.action=options("na.action"), call=summary(mg)$call, terms=summary(mg)$terms,
-                  aliased=summary(mg)$aliased,
-                  data=dataName, df=summary(mg)$df, Ntotal=Ntotal, Nvalid=Nvalid, Nmissing=Nmissing,
-                  weights=varname.weights,VarCovMatrix= stats::vcov(mg),CorrMatrix=NA,
-                  deviance.null=mg$null.deviance, df.null=mg$df.null, deviance.resid=mg$deviance, df.resid=mg$df.residual,
+    outlist<-list( iter=mg$iter,
+                  na.action=options("na.action"), call=summary(mg)$call, terms=summary(mg)$terms,
+                  data=dataName, Ntotal=Ntotal, Nvalid=Nvalid, Nmissing=Nmissing,
+                  weights=varname.weights,VarCovMatrix= stats::vcov(mg),
+                  method=mg$method, loglik=mg$loglik,
                   formula=mg$formula, coefficients=summary(mg)$coefficients)
   }else{
     errorMessage.d1<-"ERROR: Model failed in this source because of an enhanced risk of disclosure"

@@ -46,7 +46,7 @@
 #' prior regression weights for the fitting process. \code{ds.coxSLMA} does not allow a weights vector to be
 #' written directly into the coxph formula.
 #' @param mixmeta If numstudies >1 the estimates for each regression coefficient and VarCovMatrix are pooled across
-#' studies using fixed-effects meta-analysis (FE).
+#' studies using fixed-effects meta-analysis , mixed-effect frameworks.
 #' @param dataName a character string specifying the name of an (optional) data frame
 #' that contains all of the variables in the coxph formula.
 #' @param checks logical. If TRUE \code{ds.coxSLMA} checks the structural integrity
@@ -78,10 +78,6 @@
 #'    \item{sixth}{: the p-value treating that as a standardised normal deviate}
 #' }
 #' @return \code{formula}: model formula, see description of formula as an input parameter (above).
-#' @return \code{df.resid}: the residual degrees of freedom around the model.
-#' @return \code{deviance.resid}: the residual deviance around the model.
-#' @return \code{df.null}: the degrees of freedom around the null model (with just an intercept).
-#' @return \code{dev.null}: the deviance around the null model (with just an intercept).
 #' @return \code{CoefMatrix}: the matrix of parameter estimates.
 #' @return \code{VarCovMatrix}: the variance-covariance matrix of parameter estimates.
 #' @return \code{weights}: the name of the vector (if any) holding regression weights.
@@ -95,7 +91,7 @@
 #' @return \code{na.action}:  chosen method of dealing with missing values. This is
 #' usually, \code{na.action = na.omit} - see help in native R.
 #' @return \code{iter}: the number of iterations required to achieve convergence
-#' of the glm model in each separate study.
+#' of the coxph model in each separate study.
 #' @return Once the study-specific output has been returned, \code{ds.coxSLMA}
 #' returns a series of lists relating to the aggregated inferences across studies.
 #' These include the following:
@@ -161,7 +157,8 @@
 #' @export
 
 
-ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, maxit=30, datasources=NULL) {
+ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, maxit=30,
+                     combine.with.mixmeta = TRUE, datasources=NULL) {
 
   # look for DS connections
   if(is.null(datasources)){
@@ -398,17 +395,96 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
 
 ## MULTIVARIATE METAANALYSE
 
+
+  if(!combine.with.mixmeta)
+  {
+    return(output.summary)
+  }
+
+  if(no.studies.valid)
+  {
+    return(output.summary)
+  }
+
+
+#NOW ONLY WORKING WITH SITUATIONS WITH AT LEAST ONE VALID STUDY
+
+#IF combine.with.mixmeta == TRUE, FIRST CHECK THAT THE MODELS IN EACH STUDY MATCH
+#IF THERE ARE DIFFERENT NUMBERS OF PARAMETERS THE ANALYST WILL
+#HAVE TO USE THE RETURNED MATRICES FOR coefs AND covars TO DETERMINE WHETHER
+#COMBINATION ACROSS STUDIES IS POSSIBLE AND IF SO, WHICH PARAMETERS GO WITH WHICH
+#ALSO DETERMINE WHICH STUDIES HAVE VALID DATA
+
+
+  coef.matrix.for.SLMA<-as.matrix(coefmatrix)
+  covar.matrix.for.SLMA<-as.list(covarmatrix)
+
+
+#SELECT VALID COLUMNS ONLY (THERE WILL ALWAYS BE AT LEAST ONE)
+
+  usecols<-NULL
+
+  for(ut in 1:(dim(coef.matrix.for.SLMA)[2]))
+  {
+    if(!is.na(coef.matrix.for.SLMA[1,ut])&&!is.null(coef.matrix.for.SLMA[1,ut]))
+    {
+      usecols<-c(usecols,ut)
+    }
+  }
+
+  coefmatrix.valid<-coef.matrix.for.SLMA[,usecols]
+
+
+  usecols1<-NULL
+
+  for(ut1 in 1:length(covar.matrix.for.SLMA))
+  {
+    if(!is.na(covar.matrix.for.SLMA[ut])&&!is.null(covar.matrix.for.SLMA[ut]))
+    {
+      usecols1<-c(usecols1,ut1)
+    }
+  }
+
+  covarmatrix.valid<-covar.matrix.for.SLMA[usecols1]
+
+
+#CHECK FOR MATCHED PARAMETERS
+
+  num.valid.studies<-as.numeric(dim(as.matrix(coefmatrix.valid))[1])
+
+  coefficient.vectors.match<-TRUE
+
+
+  if(!coefficient.vectors.match){
+    cat("\n\nModels in different sources vary in structure\nplease match coefficients for meta-analysis individually\n")
+    cat("nYou can use the DataSHIELD generated estimates and Varcovar matrix as the basis for a meta-analysis\nbut carry out the final pooling step independently of DataSHIELD using whatever meta-analysis package you wish\n\n")
+    return(list(output.summary=output.summary))
+}
+
+
+# COMBINE WITH MIXMETA
+
+  #mix <- mixmeta::mixmeta(formula, S = NULL,  method= NULL)
+
   for(i in 1:numstudies){
     if(numstudies > 1){
 
-      mix <- mixmeta::mixmeta(formula = coefmatrix, S = covarmatrix, method = "fixed")
+      mix.fixed <- mixmeta::mixmeta(formula = coefmatrix.valid, S = covarmatrix.valid, method = "fixed")
+      mix.ml <- mixmeta::mixmeta(formula = coefmatrix.valid, S = covarmatrix.valid, method = "ml")
+      mix.reml <- mixmeta::mixmeta(formula = coefmatrix.valid, S = covarmatrix.valid, method = "reml")
+      mix.mm <- mixmeta::mixmeta(formula = coefmatrix.valid, S = covarmatrix.valid, method = "mm")
+      mix.vc <- mixmeta::mixmeta(formula = coefmatrix.valid, S = covarmatrix.valid, method = "vc")
 
-      return(list(output.summary=output.summary,coefmatrix, covarmatrix, summary(mix)))
+      return(list(output.summary=output.summary,num.valid.studies = num.valid.studies,
+                  coefmatrix.valid=coefmatrix.valid, covarmatrix.valid = covarmatrix.valid,
+                  Fixed = summary(mix.fixed), ML =summary(mix.ml),
+                  REML = summary(mix.reml)))
     }
     else{
-      return(list(study.summary= study.summary))
+      return(list(study.summary = study.summary ))
     }
-  }
-}
 
+  }
+
+}
 # ds.coxSLMA

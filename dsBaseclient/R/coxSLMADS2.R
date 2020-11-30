@@ -234,7 +234,7 @@ coxSLMADS2 <-function(formula, weights, dataName){
     outlist<-list( iter=mg$iter,
                   na.action=options("na.action"), call=summary(mg)$call, terms=summary(mg)$terms,
                   data=dataName, Ntotal=Ntotal, Nvalid=Nvalid, Nmissing=Nmissing,
-                  weights=varname.weights,VarCovMatrix= stats::vcov(mg),
+                  weights=varname.weights,vcov= stats::vcov(mg),
                   method=mg$method, loglik=mg$loglik,
                   formula=mg$formula, coefficients=summary(mg)$coefficients)
   }else{

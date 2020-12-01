@@ -21,14 +21,13 @@ coxSLMADS1 <- function (formula, weights, data){
 
   errorMessage="No errors"
 
-  #############################################################
-  #MODULE 1: CAPTURE THE nfilter SETTINGS                     #
-  thr <- dsBase::listDisclosureSettingsDS()                           #
-  nfilter.tab<-as.numeric(thr$nfilter.tab)                    #
-  nfilter.glm<-as.numeric(thr$nfilter.glm)                    #
-  #nfilter.subset<-as.numeric(thr$nfilter.subset)             #
-  #nfilter.string<-as.numeric(thr$nfilter.string)             #
-  #############################################################
+
+  #MODULE 1: CAPTURE THE nfilter SETTINGS
+  thr <- dsBase::listDisclosureSettingsDS()
+  nfilter.tab<-as.numeric(thr$nfilter.tab)
+  nfilter.glm<-as.numeric(thr$nfilter.glm)
+  #nfilter.subset<-as.numeric(thr$nfilter.subset)
+  #nfilter.string<-as.numeric(thr$nfilter.string)
 
 
   # get the value of the 'data' and 'weights' parameters provided as character on the client side
@@ -84,10 +83,9 @@ coxSLMADS1 <- function (formula, weights, data){
   y.vect<-as.vector(mod.coxph.ds$y)
 
 
-  ##############################################################
   #FIRST TYPE OF DISCLOSURE TRAP - TEST FOR OVERSATURATED MODEL#
-  #TEST AGAINST nfilter.glm									  #
-  ##############################################################
+
+  #TEST AGAINST nfilter.glm
 
   coxph.saturation.invalid<-0
   num.p<-dimX[2]
@@ -109,9 +107,9 @@ coxSLMADS1 <- function (formula, weights, data){
   }
 
 
-  ################################
-  #SECOND TYPE OF DISCLOSURE TRAP#
-  ################################
+
+  #SECOND TYPE OF DISCLOSURE TRAP
+
 
   #If y, X or w data are invalid but user has modified clientside
   #function (ds.coxSLMA) to circumvent trap, model will get to this point without
@@ -141,6 +139,7 @@ coxSLMADS1 <- function (formula, weights, data){
 
 
   #CHECK X MATRIX VALIDITY
+
   #Check no dichotomous X vectors with between 1 and filter.threshold
   #observations at either level
 

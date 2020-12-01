@@ -359,7 +359,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
   }
 
 
-
   #Annotate output matrices with study indicators
 
   study.names.list<-NULL
@@ -389,7 +388,7 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
   output.summary<-eval(parse(text=output.summary.text))
 
 
-#END OF ANNOTATION CODE
+##########END OF ANNOTATION CODE ################
 
 
 ## MULTIVARIATE METAANALYSE
@@ -405,7 +404,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
     return(output.summary)
   }
 
-
 #NOW ONLY WORKING WITH SITUATIONS WITH AT LEAST ONE VALID STUDY
 
 #IF combine.with.mixmeta == TRUE, FIRST CHECK THAT THE MODELS IN EACH STUDY MATCH
@@ -414,10 +412,8 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
 #COMBINATION ACROSS STUDIES IS POSSIBLE AND IF SO, WHICH PARAMETERS GO WITH WHICH
 #ALSO DETERMINE WHICH STUDIES HAVE VALID DATA
 
-
   coef.matrix.for.SLMA<-as.matrix(coefmatrix)
   vcov.matrix.for.SLMA<-as.list(vcovmatrix)
-
 
 #SELECT VALID COLUMNS ONLY (THERE WILL ALWAYS BE AT LEAST ONE)
 
@@ -433,7 +429,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
 
   coefmatrix.valid<-coef.matrix.for.SLMA[,usecols]
 
-
   usecols1<-NULL
 
   for(ut1 in 1:length(vcov.matrix.for.SLMA))
@@ -443,7 +438,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
       usecols1<-c(usecols1,ut1)
     }
   }
-
   vcovmatrix.valid<-vcov.matrix.for.SLMA[usecols1]
 
 
@@ -453,7 +447,6 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
 
   coefficient.vectors.match<-TRUE
 
-
   if(!coefficient.vectors.match){
     cat("\n\nModels in different sources vary in structure\nplease match coefficients for meta-analysis individually\n")
     cat("nYou can use the DataSHIELD generated estimates and vcov matrix as the basis for a meta-analysis\nbut carry out the final pooling step independently of DataSHIELD using whatever meta-analysis package you wish\n\n")
@@ -461,9 +454,9 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
 }
 
 
-# COMBINE WITH MIXMETA
+#  Mixmeta analysis
 
-  #mix <- mixmeta::mixmeta(formula, S = NULL,  method= NULL)
+#mix <- mixmeta::mixmeta(formula, S = NULL,  method= NULL)
 
   for(i in 1:numstudies){
     if(numstudies > 1){

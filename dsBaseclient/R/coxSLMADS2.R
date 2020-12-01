@@ -89,7 +89,7 @@ coxSLMADS2 <-function(formula, weights, dataName){
   }
 
 
-  # 	#Identify and use variable names to count missings
+  # 	#Identify and use variable names to count missing
 
   all.data <- eval(parse(text=cbindraw.text), envir = parent.frame())
   all.data <- eval(parse(text=cbindraw.text))

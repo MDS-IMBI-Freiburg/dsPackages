@@ -6,14 +6,10 @@
 #' coxSLMADS1 (aggregate) and coxSLMADS2 (aggregate).ds.coxSLMA sends
 #' a command to every data source to fit the model required but each separate source
 #' simply fits that model to completion (ie undertakes all iterations until
-#' the model converges) and the estimates (regression coefficients) and their standard
-#' errors from each source are sent back to the client and are then pooled using SLMA
-#' via any approach the user wishes to implement. The ds.coxSLMA functions includes
-#' a function  <mixmeta> which  pools the models
-#' across studies using the mixmeta function (from the mixmeta package) using three
-#' optimisation methods: random effects under maximum likelihood (ML); random effects
-#' under restricted maximum likelihood (REML); or fixed effects (FE). But once
-#' the estimates and standard errors are on the clientside, the user
+#' the model converges) and the estimates (regression coefficients) and their Variance covariance
+#' matrices from each source are sent back to the client and are then pooled using SLMA
+#' across studies using the mixmeta function (from the mixmeta package) using fixed
+#' optimisation method.But once the estimates and Variance-covariances are on the clientside, the user
 #' can alternatively choose to use another meta-analysis package in any way he/she wishes,
 #' to pool the coefficients across studies.
 #' In \code{formula} Most shortcut notation for formulas allowed under R's standard \code{coxph()}
@@ -36,7 +32,7 @@
 #' on the server-site at every study
 #' and that they have the correct characteristics required to fit the model.
 #' It is suggested to make \code{checks} argument TRUE only if an unexplained
-#'  problem in the model fit is encountered because the running process takes several minutes.
+#' problem in the model fit is encountered because the running process takes several minutes.
 #'
 #' Server functions called: \code{coxSLMADS1}, and \code{coxSLMADS2}.
 #' @param formula an object of class formula describing
@@ -45,8 +41,8 @@
 #' @param weights a character string specifying the name of a variable containing
 #' prior regression weights for the fitting process. \code{ds.coxSLMA} does not allow a weights vector to be
 #' written directly into the coxph formula.
-#' @param mixmeta If numstudies >1 the estimates for each regression coefficient and VarCovMatrix are pooled across
-#' studies using fixed-effects meta-analysis , mixed-effect frameworks.
+#' @param mixmeta If TRUE and numstudies > 1, the regression coefficient and Variance-Covariance matrix are pooled across
+#' studies using fixed-effects meta-analysis framework.
 #' @param dataName a character string specifying the name of an (optional) data frame
 #' that contains all of the variables in the coxph formula.
 #' @param checks logical. If TRUE \code{ds.coxSLMA} checks the structural integrity
@@ -81,7 +77,6 @@
 #' @return \code{CoefMatrix}: the matrix of parameter estimates.
 #' @return \code{vcovmatrix}: the variance-covariance matrix of parameter estimates.
 #' @return \code{weights}: the name of the vector (if any) holding regression weights.
-#' parameter is 1.
 #' @return \code{Nmissing}: the number of missing observations in the given study.
 #' @return \code{Nvalid}: the number of valid (non-missing) observations in the given study.
 #' @return \code{Ntotal}: the total number of observations in the given study
@@ -136,8 +131,8 @@
 #'
 #' # Create the serverside survival object
 #
-#' ds.Surv(x = "D$survtime",
-#'         y = "D$cens",
+#' ds.Surv(time = "D$survtime",
+#'         event = "D$cens",
 #'         newobj = "Survobj"
 #'         datasources = connections)
 #'
@@ -325,156 +320,146 @@ ds.coxSLMA<-function(formula=NULL, weights=NULL,dataName=NULL, checks=FALSE, max
 
   study.summary <- DSI::datashield.aggregate(datasources, cally2)
 
+
+  #NOW ONLY WORKING WITH SITUATIONS WITH AT LEAST ONE VALID STUDY
+
   numstudies<-length(datasources)
 
-  study.include.in.analysis <- NULL
-  study.with.errors<-NULL
-  all.studies.valid<-1
-  no.studies.valid<-1
 
+  #IF combine.with.mixmeta == TRUE, FIRST CHECK THAT THE MODELS IN EACH STUDY MATCH
+  #IF THERE ARE DIFFERENT NUMBERS OF PARAMETERS THE ANALYST WILL
+  #HAVE TO USE THE RETURNED MATRICES FOR coefs AND vcovs TO DETERMINE WHETHER
+  #COMBINATION ACROSS STUDIES IS POSSIBLE AND IF SO, WHICH PARAMETERS GO WITH WHICH
+  #ALSO DETERMINE WHICH STUDIES HAVE VALID DATA
 
-  #MAKE SURE THAT IF SOME STUDIES HAVE MORE PARAMETERS IN THE
-  #FITTED coxph (eg BECAUSE OF ALIASING) THE FINAL RETURN MATRICES
-  #HAVE ENOUGH ROWS TO FIT THE MAXIMUM LENGTH
+  if (combine.with.mixmeta == TRUE & numstudies > 1){
 
-  numcoefficients.max<-0
+    study.include.in.analysis <- NULL
+    study.with.errors<-NULL
+    all.studies.valid<-1
+    no.studies.valid<-1
 
-  for(g in numstudies){
-    if(length(study.summary[[g]]$coefficients[,1])>numcoefficients.max){
-      numcoefficients.max<-length(study.summary[[g]]$coefficients[,1])
+    #MAKE SURE THAT IF SOME STUDIES HAVE MORE PARAMETERS IN THE
+    #FITTED coxph (eg BECAUSE OF ALIASING) THE FINAL RETURN MATRICES
+    #HAVE ENOUGH ROWS TO FIT THE MAXIMUM LENGTH
+
+    numcoefficients.max<-0
+
+    for(g in numstudies){
+      if(length(study.summary[[g]]$coefficients[,1])>numcoefficients.max){
+        numcoefficients.max<-length(study.summary[[g]]$coefficients[,1])
+      }
     }
-  }
 
-  numcoefficients<-numcoefficients.max
+    numcoefficients<-numcoefficients.max
 
-  coefmatrix<-matrix(NA,nrow<-numcoefficients,ncol=numstudies)
+    coefmatrix<-matrix(NA,nrow<-numcoefficients,ncol=numstudies)
 
-  vcovmatrix<- NULL
+    vcovmatrix<- NULL
 
 
-  for(k in 1:numstudies){
-    coefmatrix[,k]<-study.summary[[k]]$coefficients[,1]
+    for(k in 1:numstudies){
+      coefmatrix[,k]<-study.summary[[k]]$coefficients[,1]
+
+      vcovmatrix[k]<-list(study.summary[[k]]$vcov)
+    }
+
+    # transpose the coefmatrix
     coefmatrix = t(coefmatrix)
-    vcovmatrix[k]<-list(study.summary[[k]]$VarCovMatrix)
-  }
+
+    #Annotate output matrices with study indicators
+
+    study.names.list<-NULL
+    coef.study.names.list<-NULL
+    vcov.study.names.list<-NULL
+
+    for(v in 1:numstudies){
+
+      study.names.list<-c(study.names.list,paste0("study",as.character(v)))
+      coef.study.names.list<-c(coef.study.names.list,paste0("coef study ",as.character(v)))
+      vcov.study.names.list<-c(vcov.study.names.list,paste0("vcov study ",as.character(v)))
+    }
+
+    colnames(coefmatrix) = dimnames(study.summary[[1]]$coefficients)[[1]]
+    rownames(coefmatrix) =  coef.study.names.list
+
+    output.summary.text<-paste0("list(")
+
+    for(u in 1:numstudies){
+      output.summary.text<-paste0(output.summary.text,"study",as.character(u),"=study.summary[[",as.character(u),"]],"," ")
+    }
+
+    output.summary.text.save<-output.summary.text
+    output.summary.text<-paste0(output.summary.text,"input.coef.matrix.for.SLMA=as.matrix(coefmatrix),input.vcov.matrix.for.SLMA=as.list(vcovmatrix))")
 
 
-  #Annotate output matrices with study indicators
-
-  study.names.list<-NULL
-  coef.study.names.list<-NULL
-  vcov.study.names.list<-NULL
-
-  for(v in 1:numstudies){
-
-    study.names.list<-c(study.names.list,paste0("study",as.character(v)))
-    coef.study.names.list<-c(coef.study.names.list,paste0("coef study ",as.character(v)))
-    vcov.study.names.list<-c(vcov.study.names.list,paste0("vcov study ",as.character(v)))
-  }
-
-  colnames(coefmatrix) = dimnames(study.summary[[1]]$coefficients)[[1]]
-  rownames(coefmatrix) =  coef.study.names.list
-
-  output.summary.text<-paste0("list(")
-
-  for(u in 1:numstudies){
-    output.summary.text<-paste0(output.summary.text,"study",as.character(u),"=study.summary[[",as.character(u),"]],"," ")
-  }
-
-  output.summary.text.save<-output.summary.text
-  output.summary.text<-paste0(output.summary.text,"input.coef.matrix.for.SLMA=as.matrix(coefmatrix),input.vcov.matrix.for.SLMA=as.list(vcovmatrix))")
+    output.summary<-eval(parse(text=output.summary.text))
 
 
-  output.summary<-eval(parse(text=output.summary.text))
+    ##########END OF ANNOTATION CODE ################
 
 
-##########END OF ANNOTATION CODE ################
+    ## MULTIVARIATE METAANALYSE
 
+    coef.matrix.for.SLMA<-as.matrix(coefmatrix)
+    vcov.matrix.for.SLMA<-as.list(vcovmatrix)
 
-## MULTIVARIATE METAANALYSE
+    #SELECT VALID COLUMNS ONLY (THERE WILL ALWAYS BE AT LEAST ONE)
 
+    usecols<-NULL
 
-  if(!combine.with.mixmeta)
-  {
-    return(output.summary)
-  }
-
-  if(no.studies.valid)
-  {
-    return(output.summary)
-  }
-
-#NOW ONLY WORKING WITH SITUATIONS WITH AT LEAST ONE VALID STUDY
-
-#IF combine.with.mixmeta == TRUE, FIRST CHECK THAT THE MODELS IN EACH STUDY MATCH
-#IF THERE ARE DIFFERENT NUMBERS OF PARAMETERS THE ANALYST WILL
-#HAVE TO USE THE RETURNED MATRICES FOR coefs AND vcovs TO DETERMINE WHETHER
-#COMBINATION ACROSS STUDIES IS POSSIBLE AND IF SO, WHICH PARAMETERS GO WITH WHICH
-#ALSO DETERMINE WHICH STUDIES HAVE VALID DATA
-
-  coef.matrix.for.SLMA<-as.matrix(coefmatrix)
-  vcov.matrix.for.SLMA<-as.list(vcovmatrix)
-
-#SELECT VALID COLUMNS ONLY (THERE WILL ALWAYS BE AT LEAST ONE)
-
-  usecols<-NULL
-
-  for(ut in 1:(dim(coef.matrix.for.SLMA)[2]))
-  {
-    if(!is.na(coef.matrix.for.SLMA[1,ut])&&!is.null(coef.matrix.for.SLMA[1,ut]))
+    for(ut in 1:(dim(coef.matrix.for.SLMA)[2]))
     {
-      usecols<-c(usecols,ut)
+      if(!is.na(coef.matrix.for.SLMA[1,ut])&&!is.null(coef.matrix.for.SLMA[1,ut]))
+      {
+        usecols<-c(usecols,ut)
+      }
     }
-  }
 
-  coefmatrix.valid<-coef.matrix.for.SLMA[,usecols]
+    coefmatrix.valid<-coef.matrix.for.SLMA[,usecols]
 
-  usecols1<-NULL
+    usecols1<-NULL
 
-  for(ut1 in 1:length(vcov.matrix.for.SLMA))
-  {
-    if(!is.na(vcov.matrix.for.SLMA[ut])&&!is.null(vcov.matrix.for.SLMA[ut]))
+    for(ut1 in 1:length(vcov.matrix.for.SLMA))
     {
-      usecols1<-c(usecols1,ut1)
+      if(!is.na(vcov.matrix.for.SLMA[ut])&&!is.null(vcov.matrix.for.SLMA[ut]))
+      {
+        usecols1<-c(usecols1,ut1)
+      }
     }
+    vcovmatrix.valid<-vcov.matrix.for.SLMA[usecols1]
+
+
+    #Check for matched parameters
+
+    num.valid.studies<-as.numeric(dim(as.matrix(coefmatrix.valid))[1])
+
+    coefficient.vectors.match<-TRUE
+
+    if(!coefficient.vectors.match){
+      cat("\n\nModels in different sources vary in structure\nplease match coefficients for meta-analysis individually\n")
+      cat("nYou can use the DataSHIELD generated estimates and vcov matrix as the basis for a meta-analysis\nbut carry out the final pooling step independently of DataSHIELD using whatever meta-analysis package you wish\n\n")
+      return(list(output.summary=output.summary))
+    }
+
+
+    ## Mixmeta analysis
+
+    #mix <- mixmeta::mixmeta(formula, S = NULL,  method= NULL)
+
+    mix.fixed <- mixmeta::mixmeta(formula = coefmatrix.valid, S = vcovmatrix.valid, method = "fixed")
+    # mix.ml <- mixmeta::mixmeta(formula = coefmatrix.valid, S = vcovmatrix.valid, method = "ml")
+    # mix.reml <- mixmeta::mixmeta(formula = coefmatrix.valid, S = vcovmatrix.valid, method = "reml")
+    # mix.mm <- mixmeta::mixmeta(formula = coefmatrix.valid, S = vcovmatrix.valid, method = "mm")
+    # mix.vc <- mixmeta::mixmeta(formula = coefmatrix.valid, S = vcovmatrix.valid, method = "vc")
+
+    return(list(output.summary=output.summary,num.valid.studies = num.valid.studies,
+                coefmatrix.valid=coefmatrix.valid, vcovmatrix.valid = vcovmatrix.valid,
+                Fixed = summary(mix.fixed)))
   }
-  vcovmatrix.valid<-vcov.matrix.for.SLMA[usecols1]
 
-
-#Check for matched parameters
-
-  num.valid.studies<-as.numeric(dim(as.matrix(coefmatrix.valid))[1])
-
-  coefficient.vectors.match<-TRUE
-
-  if(!coefficient.vectors.match){
-    cat("\n\nModels in different sources vary in structure\nplease match coefficients for meta-analysis individually\n")
-    cat("nYou can use the DataSHIELD generated estimates and vcov matrix as the basis for a meta-analysis\nbut carry out the final pooling step independently of DataSHIELD using whatever meta-analysis package you wish\n\n")
-    return(list(output.summary=output.summary))
-}
-
-
-#  Mixmeta analysis
-
-#mix <- mixmeta::mixmeta(formula, S = NULL,  method= NULL)
-
-  for(i in 1:numstudies){
-    if(numstudies > 1){
-
-      mix.fixed <- mixmeta::mixmeta(formula = coefmatrix.valid, S = vcovmatrix.valid, method = "fixed")
-      # mix.ml <- mixmeta::mixmeta(formula = coefmatrix.valid, S = vcovmatrix.valid, method = "ml")
-      # mix.reml <- mixmeta::mixmeta(formula = coefmatrix.valid, S = vcovmatrix.valid, method = "reml")
-      # mix.mm <- mixmeta::mixmeta(formula = coefmatrix.valid, S = vcovmatrix.valid, method = "mm")
-      # mix.vc <- mixmeta::mixmeta(formula = coefmatrix.valid, S = vcovmatrix.valid, method = "vc")
-
-      return(list(output.summary=output.summary,num.valid.studies = num.valid.studies,
-                  coefmatrix.valid=coefmatrix.valid, vcovmatrix.valid = vcovmatrix.valid,
-                  Fixed = summary(mix.fixed)))
-    }
-    else{
-      return(list(study.summary = study.summary ))
-    }
-
+  else {
+    return(study.summary)
   }
 
 }

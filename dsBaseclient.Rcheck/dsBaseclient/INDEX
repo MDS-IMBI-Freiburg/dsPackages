@@ -1,0 +1,12 @@
+SurvDS                  Server side function called by 'ds.Surv' to
+                        create the survival object
+coxSLMADS1              Fit a cox proportional hazard Model (coxph)
+                        with pooling via Study Level Meta-Analysis
+                        (SLMA)
+coxSLMADS2              Fit a cox proportional hazard Model (coxph)
+                        model with pooling via Study Level
+                        Meta-Analysis (SLMA)
+ds.Surv                 Client side function calling 'SurvDS'
+ds.coxSLMA              Fit a cox proportional hazard Model (coxph)
+                        with pooling via Study Level Meta-Analysis
+                        (SLMA)

@@ -10,3 +10,5 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
+NeedsCompilation: no
+Packaged: 2021-01-18 10:57:45 UTC; sofack

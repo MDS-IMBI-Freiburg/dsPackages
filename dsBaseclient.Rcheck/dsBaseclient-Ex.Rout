@@ -1,0 +1,126 @@
+
+R version 4.0.2 (2020-06-22) -- "Taking Off Again"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "dsBaseclient"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> options(pager = "console")
+> base::assign(".ExTimings", "dsBaseclient-Ex.timings", pos = 'CheckExEnv')
+> base::cat("name\tuser\tsystem\telapsed\n", file=base::get(".ExTimings", pos = 'CheckExEnv'))
+> base::assign(".format_ptime",
++ function(x) {
++   if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]
++   if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]
++   options(OutDec = '.')
++   format(x[1L:3L], digits = 7L)
++ },
++ pos = 'CheckExEnv')
+> 
+> ### * </HEADER>
+> library('dsBaseclient')
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("ds.coxSLMA")
+> ### * ds.coxSLMA
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: ds.coxSLMA
+> ### Title: Fit a cox proportional hazard Model (coxph) with pooling via
+> ###   Study Level Meta-Analysis (SLMA)
+> ### Aliases: ds.coxSLMA
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D 
+> ##D   require('DSI')
+> ##D   require('DSOpal')
+> ##D   require('dsBaseClient')
+> ##D 
+> ##D   # Example 1: Fitting coxph for survival analysis
+> ##D   # For this analysis we need to load survival data from the server
+> ##D 
+> ##D   builder <- DSI::newDSLoginBuilder()
+> ##D   builder$append(server = "study1",
+> ##D                  url = "http://192.168.56.100:8080/",
+> ##D                  user = "administrator", password = "datashield_test&",
+> ##D                  table = "SURVIVAL.EXPAND_NO_MISSING1", driver = "OpalDriver")
+> ##D   builder$append(server = "study2",
+> ##D                  url = "http://192.168.56.100:8080/",
+> ##D                  user = "administrator", password = "datashield_test&",
+> ##D                  table = "SURVIVAL.EXPAND_NO_MISSING2", driver = "OpalDriver")
+> ##D   builder$append(server = "study3",
+> ##D                  url = "http://192.168.56.100:8080/",
+> ##D                  user = "administrator", password = "datashield_test&",
+> ##D                  table = "SURVIVAL.EXPAND_NO_MISSING3", driver = "OpalDriver")
+> ##D   logindata <- builder$build()
+> ##D 
+> ##D  # Log onto the remote Opal training servers
+> ##D   connections <- DSI::datashield.login(logins = logindata, assign = TRUE, symbol = "D")
+> ##D 
+> ##D 
+> ##D  # The 'cens' variable should be an interger/ numeric
+> ##D 
+> ##D ds.asInteger(x.name = "D$cens",
+> ##D              newobj = "CENS",
+> ##D              datasources = connections)
+> ##D 
+> ##D # Create the serverside survival object
+> ##D ds.Surv(time = "D$survtime",
+> ##D         event = "D$cens",
+> ##D         newobj = "Survobj"
+> ##D         datasources = connections)
+> ##D 
+> ##D 
+> ##D ds.coxSLMA(formula = Survobj ~ noise.56 + pm10.16 + bmi.26 + age.60 ,
+> ##D            data = "D",
+> ##D            weights = NULL,
+> ##D            checks = FALSE,
+> ##D            maxit = 20,
+> ##D            datasources = connections)
+> ##D 
+> ##D  # Clear the Datashield R sessions and logout
+> ##D 
+> ##D datashield.logout(connections)
+> ##D 
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("ds.coxSLMA", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> ### * <FOOTER>
+> ###
+> cleanEx()
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  0.25 0.05 0.47 NA NA 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

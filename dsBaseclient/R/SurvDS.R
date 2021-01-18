@@ -34,7 +34,7 @@ SurvDS <- function (time, time2, event, type) {
   if(!is.null(time2)){
     time2.var <- eval(parse(text=time2), envir = parent.frame())
   }else{
-    time2 = NULL
+    time2.var = NULL
   }
 
   if(!is.null(event)){
@@ -50,18 +50,18 @@ SurvDS <- function (time, time2, event, type) {
 
     if(!is.null(type)){
 
-      output <- survival::Surv(time = time.var, time2 = time2.var, event = event.var, type = type, origin = origin )
+      output <- survival::Surv(time = time.var, time2 = time2.var, event = event.var, type = type )
     }
     else{
-      output <- survival::Surv(time = time.var, time2 = time2.var, event = event.var, origin = origin )
+      output <- survival::Surv(time = time.var, time2 = time2.var, event = event.var )
     }
   }
   else{
     if(!is.null(type)){
-      output <- survival::Surv(time = time.var, event = event.var, type = type, origin = origin )
+      output <- survival::Surv(time = time.var, event = event.var, type = type )
     }
     else{
-      output <- survival::Surv(time = time.var, event = event.var, origin = origin )
+      output <- survival::Surv(time = time.var, event = event.var )
     }
   }
 

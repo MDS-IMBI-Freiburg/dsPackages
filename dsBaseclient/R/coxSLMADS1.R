@@ -14,7 +14,7 @@
 #' @return assesses and returns information about failure to pass disclosure traps
 #' such as test of model complexity (saturation).
 #' For more detailed information see help for ds.coxSLMA.
-#' @author Sofack Ghislain.(Based on glmSLMADS1 by Paul Burton for DataSHIELD Development Team)
+#' @author Sofack Ghislain (Based on glmSLMADS1 by Paul Burton for DataSHIELD Development Team)
 #' @export
 
 coxSLMADS1 <- function (formula, weights, data){

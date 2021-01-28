@@ -16,7 +16,7 @@
 #' enable the SLMA pooling of the separate coxph models fitted to each study -
 #' in particular including the study-specific regression coefficients and their corresponding
 #' standard errors.
-#' @author Sofack Ghislain.(Based on glmSLMADS2 by Paul Burton for DataSHIELD Development Team)
+#' @author Sofack Ghislain (Based on glmSLMADS2 by Paul Burton for DataSHIELD Development Team)
 #' @export
 
 

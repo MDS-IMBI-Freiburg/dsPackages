@@ -92,7 +92,7 @@
 #' These include the following:
 #' @return \code{num.valid.studies}: the number of studies with valid output
 #' included in the combined analysis
-#' @author Sofack, Ghislain.(Based on ds.glmSLMA by Paul Burton for DataSHIELD Development Team)
+#' @author Sofack Ghislain (Based on ds.glmSLMA by Paul Burton for DataSHIELD Development Team)
 
 #' @examples
 #' \dontrun{

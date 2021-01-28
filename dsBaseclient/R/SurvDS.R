@@ -11,7 +11,7 @@
 #' @param type character string specifying the type of censoring. Possible
 #' values are "right", "left", "counting", "interval", "interval2" or "mstate"..
 #' @return the results of the survival object stored on the server.
-#' @author Sofack, Ghislain. (based on corTestDS by Demetris Avraam, for DataSHIELD Development Team)
+#' @author Sofack Ghislain (based on corTestDS by Demetris Avraam, for DataSHIELD Development Team)
 #' @export
 #'
 

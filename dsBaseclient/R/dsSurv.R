@@ -18,7 +18,7 @@
 #' If the \code{datasources} argument is not specified
 #' the default set of connections will be used: see \code{\link{datashield.connections_default}}.
 #' @return the results of the survival object stored on the server.
-#' @author Sofack, Ghislain. (based on corTestDS by Demetris Avraam, for DataSHIELD Development Team)
+#' @author Sofack, Ghislain (based on corTestDS by Demetris Avraam, for DataSHIELD Development Team)
 #' @export
 #'
 

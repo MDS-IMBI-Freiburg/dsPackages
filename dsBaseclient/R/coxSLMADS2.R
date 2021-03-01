@@ -20,7 +20,7 @@
 #' @export
 
 
-coxSLMADS2 <-function(formula, weights, dataName){
+coxSLMADS2 <- function(formula, weights, dataName){
 
 
   #MODULE 1: CAPTURE THE nfilter SETTINGS
@@ -44,67 +44,8 @@ coxSLMADS2 <-function(formula, weights, dataName){
   }
 
   # Rewrite formula extracting variables nested in structures like data frame or list
-  # (e.g. D$A~D$B will be re-written A~B)
-  # Note final product is a list of the variables in the model (yvector and covariates)
-  # it is NOT a list of model terms - these are derived later
 
-  # Convert formula into an editable character string
-  formulatext <- Reduce(paste, deparse(formula))
-
-  # First save original model formula
-
-  originalFormula <- formulatext
-
-  # # Convert formula string into separate variable names split by |
-  formulatext <- gsub(" ", "", formulatext, fixed=TRUE)
-  formulatext <- gsub("~", "|", formulatext, fixed=TRUE)
-  formulatext <- gsub("+", "|", formulatext, fixed=TRUE)
-  formulatext <- gsub("*", "|", formulatext, fixed=TRUE)
-  formulatext <- gsub("||", "|", formulatext, fixed=TRUE)
-
-
-  #Remember model.variables and then varnames INCLUDE BOTH yvect AND linear predictor components
-
-  model.variables <- unlist(strsplit(formulatext, split="|", fixed=TRUE))
-
-  varnames <- c()
-  for(i in 1:length(model.variables)){
-    elt <- unlist(strsplit(model.variables[i], split="$", fixed=TRUE))
-    varnames <- append(varnames, elt[length(elt)])
-  }
-
-  varnames <- unique(varnames)
-
-  if(!is.null(dataName)){
-    for(v in 1:length(varnames)){
-      varnames[v] <- paste0(dataName,"$",varnames[v])
-      test.string.0 <- paste0(dataName,"$","0")
-      test.string.1 <- paste0(dataName,"$","1")
-      if(varnames[v]==test.string.0) varnames[v] <- "0"
-      if(varnames[v]==test.string.1) varnames[v] <- "1"
-    }
-    cbindraw.text <- paste0("cbind(", paste(varnames, collapse=","), ")")
-  }else{
-    cbindraw.text <- paste0("cbind(", paste(varnames, collapse=","), ")")
-  }
-
-
-  # 	#Identify and use variable names to count missing
-
-  all.data <- eval(parse(text=cbindraw.text), envir = parent.frame())
-  all.data <- eval(parse(text=cbindraw.text))
-
-  Ntotal <- dim(all.data)[1]
-
-  nomiss.any <- stats::complete.cases(all.data)
-  nomiss.any.data <- all.data[nomiss.any,]
-  N.nomiss.any <- dim(nomiss.any.data)[1]
-
-  Nvalid <- N.nomiss.any
-  Nmissing <- Ntotal-Nvalid
-
-
-  formula2use <- stats::as.formula(paste0(Reduce(paste, deparse(originalFormula))), env = parent.frame()) # here we need the formula as a 'call' object
+  #formula2use <- stats::as.formula(paste0(Reduce(paste, deparse(originalFormula))), env = parent.frame()) # here we need the formula as a 'call' object
 
   formula2use <- formula
 
@@ -232,11 +173,11 @@ coxSLMADS2 <-function(formula, weights, dataName){
     Ntotal <- Nvalid+Nmissing
 
     outlist<-list( iter=mg$iter,
-                  na.action=options("na.action"), call=summary(mg)$call, terms=summary(mg)$terms,
-                  data=dataName, Ntotal=Ntotal, Nvalid=Nvalid, Nmissing=Nmissing,
-                  weights=varname.weights,vcov= stats::vcov(mg),
-                  method=mg$method, loglik=mg$loglik,
-                  formula=mg$formula, coefficients=summary(mg)$coefficients)
+                   na.action=options("na.action"), call=summary(mg)$call, terms=summary(mg)$terms,
+                   data=dataName, Ntotal=Ntotal, Nvalid=Nvalid, Nmissing=Nmissing,
+                   weights=varname.weights,vcov= stats::vcov(mg),
+                   method=mg$method, loglik=mg$loglik,
+                   formula=mg$formula, coefficients=summary(mg)$coefficients)
   }else{
     errorMessage.d1<-"ERROR: Model failed in this source because of an enhanced risk of disclosure"
     errorMessage.d2<-"The following message(s) identify the cause of this enhanced risk"
@@ -274,3 +215,11 @@ coxSLMADS2 <-function(formula, weights, dataName){
 
 # AGGREGATE FUNCTION
 # coxSLMADS2
+
+
+
+
+
+
+
+

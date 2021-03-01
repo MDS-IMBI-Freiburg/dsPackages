@@ -155,7 +155,8 @@ ds.Surv <- function( time = NULL,
                 studyside.messages=studyside.message))
   }
 
- ###END OF CHECK OBJECT CREATED CORECTLY MODULE
+  ###END OF CHECK OBJECT CREATED CORECTLY MODULE
 }
+
 #ASSIGN FUNCTION
 # ds.Surv
